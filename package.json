@@ -43,6 +43,10 @@
     "sdk"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Crypto-Rails/gateway-deposit-sdk.git"
+  },
   "peerDependencies": {
     "react": ">=17"
   },
