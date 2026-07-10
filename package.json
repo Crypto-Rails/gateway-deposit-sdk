@@ -1,0 +1,64 @@
+{
+  "name": "deposit-watch",
+  "version": "0.1.0",
+  "description": "Drop-in frontend SDK: show a QR deposit modal for a set of (address, token, chain) targets and resolve as soon as a deposit lands. Works in any FE stack, with first-class React bindings.",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js",
+      "require": "./dist/react/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node examples/verify-balance.mjs && node examples/batch-test.mjs && node examples/dom-test.mjs && node examples/mindeposit-test.mjs",
+    "test:live": "npm run build && node examples/batch-live-test.mjs"
+  },
+  "keywords": [
+    "crypto",
+    "deposit",
+    "qr",
+    "wallet",
+    "evm",
+    "solana",
+    "erc20",
+    "spl",
+    "web3",
+    "react",
+    "sdk"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=17"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@noble/hashes": "^1.8.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^18.3.12",
+    "jsdom": "^25.0.1",
+    "qrcode": "^1.5.4",
+    "react": "^18.3.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.6.3"
+  }
+}
