@@ -3,69 +3,195 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>deposit-watch demo</title>
+    <title>deposit-watch vanilla js demo</title>
     <style>
-      :root { --accent: #5b5bd6; }
-      body { font-family: -apple-system, system-ui, sans-serif; max-width: 760px; margin: 48px auto; padding: 0 20px; color: #1b1d21; }
-      h1 { font-size: 22px; }
-      h2 { font-size: 16px; margin: 0 0 4px; }
-      .card { border: 1px solid #e6e8eb; border-radius: 14px; padding: 20px; margin: 20px 0; }
-      p.hint { color: #6b7280; line-height: 1.5; font-size: 13px; margin-top: 4px; }
-      label { display: block; margin: 12px 0 4px; font-size: 12px; font-weight: 600; }
-      input, select { width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-      .row { display: flex; gap: 10px; }
-      .row > div { flex: 1; }
-      button { background: var(--accent); color: #fff; border: 0; padding: 11px 16px; border-radius: 9px; font-size: 14px; cursor: pointer; margin-top: 14px; }
-      button:disabled { opacity: .5; cursor: default; }
-      pre { background: #f5f5f7; padding: 12px; border-radius: 8px; font-size: 12px; overflow: auto; white-space: pre-wrap; word-break: break-all; }
-      .valid { color: #16a34a; } .invalid { color: #dc2626; }
-      table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
-      th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid #eee; font-variant-numeric: tabular-nums; }
-      th { color: #6b7280; font-weight: 600; }
-      code { background: #f0f0f3; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
-      .valfeedback { font-size: 12px; margin-top: 4px; min-height: 16px; }
-      .b-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
-      .b-row .b-addr { flex: 2; } .b-row .b-tok { flex: 2; } .b-row .b-ch { flex: 1; margin: 0; }
-      .b-rm { background: none; color: #9ca3af; border: 1px solid #e6e8eb; border-radius: 8px; width: 34px; height: 38px; padding: 0; margin: 0; font-size: 18px; flex: 0 0 auto; }
-      button.secondary { background: none; color: var(--accent); border: 1px dashed #c7c7e6; font-size: 13px; padding: 8px 12px; margin-top: 10px; }
+      :root {
+        --accent: #5b5bd6;
+      }
+      body {
+        font-family: -apple-system, system-ui, sans-serif;
+        max-width: 760px;
+        margin: 48px auto;
+        padding: 0 20px;
+        color: #1b1d21;
+      }
+      h1 {
+        font-size: 22px;
+      }
+      h2 {
+        font-size: 16px;
+        margin: 0 0 4px;
+      }
+      .card {
+        border: 1px solid #e6e8eb;
+        border-radius: 14px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+      p.hint {
+        color: #6b7280;
+        line-height: 1.5;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+      label {
+        display: block;
+        margin: 12px 0 4px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 9px 11px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+      }
+      .row > div {
+        flex: 1;
+      }
+      button {
+        background: var(--accent);
+        color: #fff;
+        border: 0;
+        padding: 11px 16px;
+        border-radius: 9px;
+        font-size: 14px;
+        cursor: pointer;
+        margin-top: 14px;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      pre {
+        background: #f5f5f7;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      .valid {
+        color: #16a34a;
+      }
+      .invalid {
+        color: #dc2626;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        margin-top: 8px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 7px 8px;
+        border-bottom: 1px solid #eee;
+        font-variant-numeric: tabular-nums;
+      }
+      th {
+        color: #6b7280;
+        font-weight: 600;
+      }
+      code {
+        background: #f0f0f3;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+      .valfeedback {
+        font-size: 12px;
+        margin-top: 4px;
+        min-height: 16px;
+      }
+      .b-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 8px;
+      }
+      .b-row .b-addr {
+        flex: 2;
+      }
+      .b-row .b-tok {
+        flex: 2;
+      }
+      .b-row .b-ch {
+        flex: 1;
+        margin: 0;
+      }
+      .b-rm {
+        background: none;
+        color: #9ca3af;
+        border: 1px solid #e6e8eb;
+        border-radius: 8px;
+        width: 34px;
+        height: 38px;
+        padding: 0;
+        margin: 0;
+        font-size: 18px;
+        flex: 0 0 auto;
+      }
+      button.secondary {
+        background: none;
+        color: var(--accent);
+        border: 1px dashed #c7c7e6;
+        font-size: 13px;
+        padding: 8px 12px;
+        margin-top: 10px;
+      }
     </style>
   </head>
   <body>
     <h1>deposit-watch — demo</h1>
     <p class="hint">
-      Serve the <strong>project root</strong> (<code>npx serve .</code>) and open this at
-      <code>/examples/demo.html</code> after <code>npm run build</code>.
+      Serve the <strong>project root</strong> (<code>npx serve .</code>) and
+      open this at <code>/examples/demo.html</code> after
+      <code>npm run build</code>.
     </p>
 
     <!-- ============ Function 1: watchDeposits ============ -->
     <div class="card">
       <h2>Function 1 — <code>watchDeposits()</code></h2>
       <p class="hint">
-        QR modal + polling. Address is <strong>checksum-validated on open</strong>. Detection
-        defaults to <em>positive</em> (any balance = deposit); <code>onDeposit</code> fires an
-        (awaited) API call the instant funds land. Set a <strong>min deposit</strong> to require a
-        minimum amount — the modal keeps polling (showing partial progress) until the running total
-        is enough, so a payment can arrive in installments.
+        QR modal + polling. Address is
+        <strong>checksum-validated on open</strong>. Detection defaults to
+        <em>positive</em> (any balance = deposit); <code>onDeposit</code> fires
+        an (awaited) API call the instant funds land. Set a
+        <strong>min deposit</strong> to require a minimum amount — the modal
+        keeps polling (showing partial progress) until the running total is
+        enough, so a payment can arrive in installments.
       </p>
 
       <label>Company name (modal title — <code>config.title</code>)</label>
       <input id="w-company" placeholder="e.g. Acme Inc" value="Acme Inc" />
-      <p class="hint" style="margin-top:2px;">
-        Shown as the header. The small line beneath it is the localized
-        “Fund your account” for the chosen language.
+      <p class="hint" style="margin-top: 2px">
+        Shown as the header. The small line beneath it is the localized “Fund
+        your account” for the chosen language.
       </p>
 
-      <label>Receiving targets — <code>watchDeposits()</code> takes an array</label>
-      <p class="hint" style="margin-top:2px;">
-        Each row is one receiving target (address · token · chain). Add several to
-        watch multiple addresses / chains at once — the modal shows a tab per target.
-        Whether it resolves on the <strong>first</strong> funded target or waits for
-        <strong>all</strong> of them is the <em>Resolve on</em> control below.
+      <label
+        >Receiving targets — <code>watchDeposits()</code> takes an array</label
+      >
+      <p class="hint" style="margin-top: 2px">
+        Each row is one receiving target (address · token · chain). Add several
+        to watch multiple addresses / chains at once — the modal shows a tab per
+        target. Whether it resolves on the <strong>first</strong> funded target
+        or waits for <strong>all</strong> of them is the
+        <em>Resolve on</em> control below.
       </p>
       <div id="w-rows"></div>
       <button id="w-add" class="secondary">+ Add target</button>
 
-      <div class="row" style="margin-top:12px;">
+      <div class="row" style="margin-top: 12px">
         <div>
           <label>Detection</label>
           <select id="w-detect">
@@ -87,8 +213,15 @@
       </div>
 
       <!-- ===== i18n + theming: everything below re-styles / re-languages the modal ===== -->
-      <p class="hint" style="margin-top:16px;border-top:1px dashed #e6e8eb;padding-top:14px;">
-        <strong>Appearance & language</strong> — the modal is fully localizable and restyleable.
+      <p
+        class="hint"
+        style="
+          margin-top: 16px;
+          border-top: 1px dashed #e6e8eb;
+          padding-top: 14px;
+        ">
+        <strong>Appearance & language</strong> — the modal is fully localizable
+        and restyleable.
       </p>
       <div class="row">
         <div>
@@ -97,14 +230,36 @@
         </div>
         <div>
           <label>Accent (<code>config.tokens.accent</code>)</label>
-          <input id="w-accent" type="color" value="#5b5bd6" style="height:38px;padding:4px;" />
+          <input
+            id="w-accent"
+            type="color"
+            value="#5b5bd6"
+            style="height: 38px; padding: 4px" />
         </div>
       </div>
-      <label>Custom CSS (<code>config.css</code> — appended inside the modal's shadow root)</label>
-      <textarea id="w-css" rows="3" spellcheck="false"
-        style="width:100%;padding:9px 11px;border:1px solid #ddd;border-radius:8px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;">.dw-card { border-radius: 4px; }
-.dw-title { text-transform: uppercase; letter-spacing: .06em; }</textarea>
-      <label>Override a single string (<code>config.messages.waiting</code>, blank = locale default)</label>
+      <label
+        >Custom CSS (<code>config.css</code> — appended inside the modal's
+        shadow root)</label
+      >
+      <textarea
+        id="w-css"
+        rows="3"
+        spellcheck="false"
+        style="
+          width: 100%;
+          padding: 9px 11px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          font-family: ui-monospace, Menlo, monospace;
+          font-size: 12.5px;
+        ">
+.dw-card { border-radius: 4px; }
+.dw-title { text-transform: uppercase; letter-spacing: .06em; }</textarea
+      >
+      <label
+        >Override a single string (<code>config.messages.waiting</code>, blank =
+        locale default)</label
+      >
       <input id="w-waiting" placeholder="e.g. Send funds to this address…" />
 
       <button id="w-open">Open deposit modal</button>
@@ -117,10 +272,12 @@
     <div class="card">
       <h2>Function 2 — <code>getBalances()</code></h2>
       <p class="hint">
-        Pass any mix of <strong>addresses, tokens, and native coins</strong> — even across chains —
-        as one target list. EVM targets on the same chain share a single <strong>Multicall3</strong>
-        call, and results come back in the same order. Each row below is one independent target
-        (blank token = the chain's native coin). Try Ethereum with
+        Pass any mix of <strong>addresses, tokens, and native coins</strong> —
+        even across chains — as one target list. EVM targets on the same chain
+        share a single <strong>Multicall3</strong>
+        call, and results come back in the same order. Each row below is one
+        independent target (blank token = the chain's native coin). Try Ethereum
+        with
         <code>0x55FE002aefF02F77364de339a1292923A15844B8</code> (Circle).
       </p>
 
@@ -133,28 +290,60 @@
     </div>
 
     <script type="module">
-      import { watchDeposits, getBalances, validateTarget, formatUnits, LOCALES } from "../dist/index.js";
+      import {
+        watchDeposits,
+        getBalances,
+        validateTarget,
+        formatUnits,
+        LOCALES,
+      } from "../dist/index.js";
 
       const CHAINS = [
-        ["1", "Ethereum"], ["8453", "Base"], ["137", "Polygon"], ["42161", "Arbitrum"],
-        ["10", "Optimism"], ["56", "BNB Chain"], ["43114", "Avalanche"],
-        ["11155111", "Ethereum Sepolia"], ["84532", "Base Sepolia"], ["80002", "Polygon Amoy"],
-        ["solana-mainnet", "Solana"], ["solana-devnet", "Solana Devnet"],
-        ["tron-mainnet", "Tron"], ["tron-shasta", "Tron Shasta"],
+        ["1", "Ethereum"],
+        ["8453", "Base"],
+        ["137", "Polygon"],
+        ["42161", "Arbitrum"],
+        ["10", "Optimism"],
+        ["56", "BNB Chain"],
+        ["43114", "Avalanche"],
+        ["11155111", "Ethereum Sepolia"],
+        ["84532", "Base Sepolia"],
+        ["80002", "Polygon Amoy"],
+        ["solana-mainnet", "Solana"],
+        ["solana-devnet", "Solana Devnet"],
+        ["tron-mainnet", "Tron"],
+        ["tron-shasta", "Tron Shasta"],
       ];
       const asChainId = (v) => (/^\d+$/.test(v) ? Number(v) : v);
       // Shared by both editors: <option> list for a chain <select>, marking `sel` selected.
       const chainOptions = (sel) =>
-        CHAINS.map(([v, n]) => `<option value="${v}"${v === sel ? " selected" : ""}>${n}</option>`).join("");
+        CHAINS.map(
+          ([v, n]) =>
+            `<option value="${v}"${v === sel ? " selected" : ""}>${n}</option>`,
+        ).join("");
 
-      const shortAddr = (a) => (a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a);
-      const chainName = (chainId) => CHAINS.find(([v]) => asChainId(v) === chainId)?.[1] ?? String(chainId);
+      const shortAddr = (a) =>
+        a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a;
+      const chainName = (chainId) =>
+        CHAINS.find(([v]) => asChainId(v) === chainId)?.[1] ?? String(chainId);
 
       // Populate the language dropdown straight from the SDK's built-in locales,
       // so it always matches whatever ships (en·es·fr·de·pt·zh·ja·ru).
-      const LOCALE_NAMES = { en: "English", es: "Español", fr: "Français", de: "Deutsch", pt: "Português", zh: "中文", ja: "日本語", ru: "Русский" };
+      const LOCALE_NAMES = {
+        en: "English",
+        es: "Español",
+        fr: "Français",
+        de: "Deutsch",
+        pt: "Português",
+        zh: "中文",
+        ja: "日本語",
+        ru: "Русский",
+      };
       document.getElementById("w-locale").innerHTML = Object.keys(LOCALES)
-        .map((code) => `<option value="${code}">${LOCALE_NAMES[code] ?? code} (${code})</option>`)
+        .map(
+          (code) =>
+            `<option value="${code}">${LOCALE_NAMES[code] ?? code} (${code})</option>`,
+        )
         .join("");
 
       const bigintJson = (_k, v) => (typeof v === "bigint" ? v.toString() : v);
@@ -166,10 +355,10 @@
         div.className = "w-target";
         div.innerHTML =
           `<div class="b-row">` +
-            `<input class="w-addr b-addr" placeholder="address — 0x… / base58 / T…" value="${row.address}" />` +
-            `<input class="w-tok b-tok" placeholder="token (blank = native)" value="${row.token}" />` +
-            `<select class="w-ch b-ch">${chainOptions(row.chain)}</select>` +
-            `<button class="w-rm b-rm" title="Remove target" aria-label="Remove target">×</button>` +
+          `<input class="w-addr b-addr" placeholder="address — 0x… / base58 / T…" value="${row.address}" />` +
+          `<input class="w-tok b-tok" placeholder="token (blank = native)" value="${row.token}" />` +
+          `<select class="w-ch b-ch">${chainOptions(row.chain)}</select>` +
+          `<button class="w-rm b-rm" title="Remove target" aria-label="Remove target">×</button>` +
           `</div>` +
           `<div class="w-feed valfeedback"></div>`;
         const addrEl = div.querySelector(".w-addr");
@@ -179,13 +368,23 @@
         // Live-validate the whole target — address AND token, checksum-aware.
         const validateRow = () => {
           const a = addrEl.value.trim();
-          if (!a) { feed.className = "valfeedback"; feed.textContent = ""; return; }
-          const vt = validateTarget({ address: a, tokenAddress: tokEl.value.trim() || null, chainId: asChainId(chEl.value) });
+          if (!a) {
+            feed.className = "valfeedback";
+            feed.textContent = "";
+            return;
+          }
+          const vt = validateTarget({
+            address: a,
+            tokenAddress: tokEl.value.trim() || null,
+            chainId: asChainId(chEl.value),
+          });
           if (!vt.ok) {
             feed.className = "valfeedback invalid";
             feed.textContent = "✗ " + vt.errors.join("; ");
           } else {
-            const tok = vt.normalized.tokenAddress ? `token ${shortAddr(vt.normalized.tokenAddress)}` : "native coin";
+            const tok = vt.normalized.tokenAddress
+              ? `token ${shortAddr(vt.normalized.tokenAddress)}`
+              : "native coin";
             feed.className = "valfeedback valid";
             feed.textContent = `✓ ${shortAddr(vt.normalized.address)} · ${tok}`;
           }
@@ -193,12 +392,16 @@
         addrEl.addEventListener("input", validateRow);
         tokEl.addEventListener("input", validateRow);
         chEl.addEventListener("change", validateRow);
-        div.querySelector(".w-rm").addEventListener("click", () => div.remove());
+        div
+          .querySelector(".w-rm")
+          .addEventListener("click", () => div.remove());
         wRows.appendChild(div);
         validateRow();
       }
       addWatchRow(); // start with a single row; "+ Add target" adds more
-      document.getElementById("w-add").addEventListener("click", () => addWatchRow());
+      document
+        .getElementById("w-add")
+        .addEventListener("click", () => addWatchRow());
 
       // --- Function 1: open modal ---
       document.getElementById("w-open").addEventListener("click", async () => {
@@ -220,7 +423,11 @@
         const waiting = document.getElementById("w-waiting").value.trim();
         const log = document.getElementById("w-log");
 
-        if (!targets.length) { log.textContent = "✗ Add at least one receiving target with an address."; return; }
+        if (!targets.length) {
+          log.textContent =
+            "✗ Add at least one receiving target with an address.";
+          return;
+        }
         log.textContent = "watching…";
 
         let minDepositRaw;
@@ -228,7 +435,8 @@
           try {
             minDepositRaw = BigInt(minRaw);
           } catch {
-            log.textContent = "✗ Min deposit must be a whole number (raw units).";
+            log.textContent =
+              "✗ Min deposit must be a whole number (raw units).";
             return;
           }
         }
@@ -242,12 +450,12 @@
             minDepositRaw,
             pollIntervalMs: 5000,
             config: {
-              title: company || undefined,             // company name → modal header
+              title: company || undefined, // company name → modal header
               // subtitle defaults to the localized "Fund your account" for `locale`
               theme: "auto",
-              locale,                                  // i18n — built-in language
-              tokens: { accent },                      // theming — design token override
-              css: css || undefined,                   // raw CSS into the shadow root
+              locale, // i18n — built-in language
+              tokens: { accent }, // theming — design token override
+              css: css || undefined, // raw CSS into the shadow root
               messages: waiting ? { waiting } : undefined, // per-string override
             },
             // Fires each poll while the running total is still below minDepositRaw.
@@ -257,8 +465,14 @@
             // Simulated backend call — awaited before the modal closes.
             onDeposit: async (e) => {
               log.textContent = `→ POST /api/deposit-received\n${JSON.stringify(
-                { address: e.target.address, amount: e.deltaFormatted, raw: e.current.raw, chainId: e.target.chainId },
-                bigintJson, 2,
+                {
+                  address: e.target.address,
+                  amount: e.deltaFormatted,
+                  raw: e.current.raw,
+                  chainId: e.target.chainId,
+                },
+                bigintJson,
+                2,
               )}\n\n(awaiting backend…)`;
               await new Promise((r) => setTimeout(r, 600));
               log.textContent += "\n✓ backend acknowledged";
@@ -275,10 +489,26 @@
       // Seed with a mixed list: one address' native ETH + USDC + USDT on Ethereum,
       // plus a second address' native ETH on Base — one call spans all of them.
       const BAL_SEED = [
-        { address: "0x55FE002aefF02F77364de339a1292923A15844B8", token: "", chain: "1" },
-        { address: "0x55FE002aefF02F77364de339a1292923A15844B8", token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", chain: "1" },
-        { address: "0x55FE002aefF02F77364de339a1292923A15844B8", token: "0xdAC17F958D2ee523a2206206994597C13D831ec7", chain: "1" },
-        { address: "0x28C6c06298d514Db089934071355E5743bf21d60", token: "", chain: "8453" },
+        {
+          address: "0x55FE002aefF02F77364de339a1292923A15844B8",
+          token: "",
+          chain: "1",
+        },
+        {
+          address: "0x55FE002aefF02F77364de339a1292923A15844B8",
+          token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          chain: "1",
+        },
+        {
+          address: "0x55FE002aefF02F77364de339a1292923A15844B8",
+          token: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+          chain: "1",
+        },
+        {
+          address: "0x28C6c06298d514Db089934071355E5743bf21d60",
+          token: "",
+          chain: "8453",
+        },
       ];
       function addBalRow(row = { address: "", token: "", chain: "1" }) {
         const div = document.createElement("div");
@@ -288,11 +518,15 @@
           `<input class="b-tok" placeholder="token (blank = native)" value="${row.token}" />` +
           `<select class="b-ch">${chainOptions(row.chain)}</select>` +
           `<button class="b-rm" title="Remove target" aria-label="Remove target">×</button>`;
-        div.querySelector(".b-rm").addEventListener("click", () => div.remove());
+        div
+          .querySelector(".b-rm")
+          .addEventListener("click", () => div.remove());
         bRows.appendChild(div);
       }
       BAL_SEED.forEach((r) => addBalRow(r));
-      document.getElementById("b-add").addEventListener("click", () => addBalRow());
+      document
+        .getElementById("b-add")
+        .addEventListener("click", () => addBalRow());
 
       document.getElementById("b-fetch").addEventListener("click", async () => {
         const out = document.getElementById("b-out");
@@ -305,16 +539,26 @@
           }))
           .filter((t) => t.address);
 
-        if (!targets.length) { out.innerHTML = `<pre class="invalid">✗ Add at least one target with an address.</pre>`; return; }
+        if (!targets.length) {
+          out.innerHTML = `<pre class="invalid">✗ Add at least one target with an address.</pre>`;
+          return;
+        }
         // Validate every address + token up front.
-        const problems = targets.flatMap((t, i) => validateTarget(t).errors.map((e) => `target[${i}]: ${e}`));
-        if (problems.length) { out.innerHTML = `<pre class="invalid">✗ ${problems.join("\n✗ ")}</pre>`; return; }
+        const problems = targets.flatMap((t, i) =>
+          validateTarget(t).errors.map((e) => `target[${i}]: ${e}`),
+        );
+        if (problems.length) {
+          out.innerHTML = `<pre class="invalid">✗ ${problems.join("\n✗ ")}</pre>`;
+          return;
+        }
         out.innerHTML = "<pre>fetching…</pre>";
         try {
           const t0 = performance.now();
           const results = await getBalances(targets);
           const ms = Math.round(performance.now() - t0);
-          const rows = results.map(({ target, balance }) => `
+          const rows = results
+            .map(
+              ({ target, balance }) => `
             <tr>
               <td>${shortAddr(target.address)}</td>
               <td>${chainName(target.chainId)}</td>
@@ -322,7 +566,9 @@
               <td>${balance.raw}</td>
               <td>${formatUnits(balance.raw, balance.decimals ?? 0)}</td>
               <td>${balance.symbol ?? "—"}</td>
-            </tr>`).join("");
+            </tr>`,
+            )
+            .join("");
           out.innerHTML = `
             <p class="hint">${targets.length} targets in ${ms}ms — EVM targets batched per chain via Multicall3.</p>
             <table><thead><tr><th>address</th><th>chain</th><th>token</th><th>raw</th><th>formatted</th><th>symbol</th></tr></thead><tbody>${rows}</tbody></table>`;
