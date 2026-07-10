@@ -2,6 +2,7 @@
   "name": "deposit-watch",
   "version": "0.1.1",
   "description": "Drop-in frontend SDK: show a QR deposit modal for a set of (address, token, chain) targets and resolve as soon as a deposit lands. Works in any FE stack, with first-class React bindings.",
+  "homepage": "https://github.com/Crypto-Rails/gateway-deposit-sdk",
   "type": "module",
   "sideEffects": false,
   "files": [
