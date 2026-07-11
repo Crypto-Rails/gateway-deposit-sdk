@@ -145,8 +145,8 @@ Each entry is `{ target, balance: { raw: bigint, decimals?, symbol? } }`. Use
 > `getBalances()` never throws for a single failed target — an unreadable
 > address comes back as `{ raw: 0n }` so one bad RPC can't sink the whole batch.
 > It takes the same [`DepositWatchConfig`](#depositwatchconfig-reference) as the
-> modal (second arg), so `rpcUrls`, `rpcHeaders`, `fetchFn` and `maxBatchSize`
-> all apply here too.
+> modal (second arg), so `rpcUrls`, `rpcHeaders` and `fetchFn` all apply here
+> too.
 
 ## Reusable watcher — `createDepositWatcher()`
 
@@ -417,7 +417,6 @@ optional — the SDK is zero-config to start.
   rpcUrls: { 1: "https://your-eth-rpc", "solana-mainnet": "https://your-sol-rpc" },
   rpcHeaders: { "tron-mainnet": { "TRON-PRO-API-KEY": "<key>" } }, // per-chain headers (API keys)
   fetchFn: fetch,        // custom fetch (SSR / proxy / custom agent)
-  maxBatchSize: undefined, // cap targets per batched request (see below)
 
   // ── Appearance ──
   theme: "auto",          // "light" | "dark" | "auto"
@@ -435,10 +434,9 @@ optional — the SDK is zero-config to start.
 
 | Field          | Type                                             | Default    | What it does                                                                                         |
 | -------------- | ------------------------------------------------ | ---------- | --------------------------------------------------------------------------------------------------- |
-| `rpcUrls`      | `Record<ChainId, string>`                        | public RPCs | Override/extend the [built-in endpoints](#rate-limits--api-keys), keyed by chain id.                |
+| `rpcUrls`      | `Record<ChainId, string \| string[]>`            | public RPCs | Override/extend the [built-in endpoints](#rate-limits--api-keys), keyed by chain id. An array is load-balanced (round-robin) and failed over in order. |
 | `rpcHeaders`   | `Record<ChainId, Record<string, string>>`        | —          | Per-chain HTTP headers, typically API keys. The fix for TronGrid rate limits.                       |
 | `fetchFn`      | `typeof fetch`                                    | global `fetch` | Custom fetch implementation (SSR, proxying, auth).                                              |
-| `maxBatchSize` | `number`                                          | no limit   | Max **targets** per batched request (Multicall3 / JSON-RPC batch). See below.                        |
 | `theme`        | `"light" \| "dark" \| "auto"`                    | `"auto"`   | Color scheme; `"auto"` follows `prefers-color-scheme`.                                               |
 | `title`        | `string`                                          | `"Deposit"` | Modal header — your brand name. Overrides `messages.title`.                                         |
 | `subtitle`     | `string \| null`                                  | localized  | Small line under the header. `""` / `null` hides it. See [i18n](#localization-i18n).                |
@@ -447,21 +445,6 @@ optional — the SDK is zero-config to start.
 | `css`          | `string`                                          | —          | Raw CSS appended inside the shadow root — the full escape hatch.                                     |
 | `locale`       | `string`                                          | `"en"`     | Built-in locale for modal strings. See [Localization](#localization-i18n).                           |
 | `messages`     | `Partial<Messages>`                               | —          | Override individual UI strings, layered on top of `locale`.                                          |
-
-### `maxBatchSize` — capping request size
-
-By default every target on a chain goes into **one** batched request. If a
-provider caps JSON-RPC batch length, or a huge Multicall3 call exceeds the
-`eth_call` gas ceiling, set `maxBatchSize` to split each chain's group into
-several requests that run in parallel and are reassembled in order:
-
-```ts
-config: { maxBatchSize: 25 }
-```
-
-It counts **targets, not sub-calls**: a token target whose `decimals` is unknown
-costs two sub-calls (`balanceOf` + `decimals`), so a request may hold up to
-`2 × maxBatchSize` sub-calls. Values `< 1` or non-finite mean "no limit".
 
 ### Resolution
 

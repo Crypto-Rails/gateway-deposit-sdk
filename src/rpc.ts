@@ -4,11 +4,57 @@ let idCounter = 1;
 
 export type RpcHeaders = Record<string, string>;
 
-export async function rpcCall<T = unknown>(
+/**
+ * One or more RPC endpoints for a chain. When an array is given the client
+ * load-balances across them and fails over to the next URL if a request errors,
+ * only surfacing an error once every endpoint has failed.
+ */
+export type RpcEndpoint = string | string[];
+
+/** Rotating cursor so successive calls spread across a multi-URL endpoint. */
+let rrCounter = 0;
+
+/**
+ * Normalize an endpoint into a non-empty list of URLs to try, in order. For a
+ * multi-URL endpoint the starting point rotates each call (round-robin) so load
+ * is spread; the remaining URLs act as failover targets.
+ */
+function orderedUrls(endpoint: RpcEndpoint): string[] {
+  const urls = (Array.isArray(endpoint) ? endpoint : [endpoint]).filter(Boolean);
+  if (urls.length <= 1) return urls;
+  const start = rrCounter++ % urls.length;
+  return [...urls.slice(start), ...urls.slice(0, start)];
+}
+
+/**
+ * Run `attempt` against each URL in turn, returning the first success. Throws
+ * the last error only after every URL has failed.
+ */
+async function withFailover<T>(
+  endpoint: RpcEndpoint,
+  label: string,
+  attempt: (url: string) => Promise<T>,
+): Promise<T> {
+  const urls = orderedUrls(endpoint);
+  if (urls.length === 0) {
+    throw new Error(`[deposit-watch] RPC ${label}: no RPC URL configured`);
+  }
+  let lastErr: unknown;
+  for (const url of urls) {
+    try {
+      return await attempt(url);
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr;
+}
+
+async function rpcCallOnce<T>(
   url: string,
   method: string,
   params: unknown[],
-  fetchFn: typeof fetch = fetch,
+  fetchFn: typeof fetch,
   headers?: RpcHeaders,
 ): Promise<T> {
   const res = await fetchFn(url, {
@@ -37,6 +83,16 @@ export async function rpcCall<T = unknown>(
   return json.result as T;
 }
 
+export async function rpcCall<T = unknown>(
+  url: RpcEndpoint,
+  method: string,
+  params: unknown[],
+  fetchFn: typeof fetch = fetch,
+  headers?: RpcHeaders,
+): Promise<T> {
+  return withFailover(url, method, (u) => rpcCallOnce<T>(u, method, params, fetchFn, headers));
+}
+
 export interface BatchItem {
   method: string;
   params: unknown[];
@@ -47,20 +103,12 @@ export interface BatchResult<T = unknown> {
   error?: { code: number; message: string };
 }
 
-/**
- * Standard JSON-RPC 2.0 batch: send many calls in ONE HTTP request and get the
- * results back in input order. This is the practical "multicall" for chains
- * without a Multicall3 contract (e.g. Tron) — it collapses N requests into one,
- * which directly cuts rate-limit (429) pressure.
- */
-export async function rpcBatch<T = unknown>(
+async function rpcBatchOnce<T>(
   url: string,
   calls: BatchItem[],
-  fetchFn: typeof fetch = fetch,
+  fetchFn: typeof fetch,
   headers?: RpcHeaders,
 ): Promise<Array<BatchResult<T>>> {
-  if (calls.length === 0) return [];
-
   const body = calls.map((c, i) => ({ jsonrpc: "2.0", id: i, method: c.method, params: c.params }));
   const res = await fetchFn(url, {
     method: "POST",
@@ -86,4 +134,20 @@ export async function rpcBatch<T = unknown>(
     }
   }
   return out;
+}
+
+/**
+ * Standard JSON-RPC 2.0 batch: send many calls in ONE HTTP request and get the
+ * results back in input order. This is the practical "multicall" for chains
+ * without a Multicall3 contract (e.g. Tron) — it collapses N requests into one,
+ * which directly cuts rate-limit (429) pressure.
+ */
+export async function rpcBatch<T = unknown>(
+  url: RpcEndpoint,
+  calls: BatchItem[],
+  fetchFn: typeof fetch = fetch,
+  headers?: RpcHeaders,
+): Promise<Array<BatchResult<T>>> {
+  if (calls.length === 0) return [];
+  return withFailover(url, "batch", (u) => rpcBatchOnce<T>(u, calls, fetchFn, headers));
 }

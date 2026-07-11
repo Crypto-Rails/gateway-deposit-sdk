@@ -1,5 +1,5 @@
 import { tronBase58ToEvmHex } from "../address.js";
-import { rpcBatch, type RpcHeaders } from "../rpc.js";
+import { rpcBatch, type RpcEndpoint, type RpcHeaders } from "../rpc.js";
 import type { BalanceSnapshot, DepositTarget } from "../types.js";
 import { getEvmBalance } from "./evm.js";
 
@@ -20,7 +20,7 @@ export function isNativeTrx(tokenAddress?: string | null): boolean {
 }
 
 export async function getTronBalance(
-  rpcUrl: string,
+  rpcUrl: RpcEndpoint,
   address: string,
   tokenAddress: string | null | undefined,
   knownDecimals: number | undefined,
@@ -42,7 +42,7 @@ export async function getTronBalance(
  * which is what actually relieves rate-limit (429) pressure.
  */
 export async function getTronBalancesBatch(
-  rpcUrl: string,
+  rpcUrl: RpcEndpoint,
   targets: DepositTarget[],
   fetchFn: typeof fetch,
   headers?: RpcHeaders,

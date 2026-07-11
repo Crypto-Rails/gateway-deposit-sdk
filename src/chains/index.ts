@@ -1,4 +1,4 @@
-import { isSolana, isTron, resolveRpcHeaders, resolveRpcUrl } from "../config.js";
+import { isSolana, isTron, resolveRpcHeaders, resolveRpcUrls } from "../config.js";
 import type { BalanceSnapshot, DepositTarget, DepositWatchConfig } from "../types.js";
 import { getEvmBalance } from "./evm.js";
 import { getSolanaBalance } from "./solana.js";
@@ -13,7 +13,7 @@ export async function getBalance(
   config: DepositWatchConfig,
 ): Promise<BalanceSnapshot> {
   const fetchFn = config.fetchFn ?? fetch;
-  const rpcUrl = resolveRpcUrl(target.chainId, config.rpcUrls);
+  const rpcUrl = resolveRpcUrls(target.chainId, config.rpcUrls);
   const headers = resolveRpcHeaders(target.chainId, config.rpcHeaders);
 
   if (isSolana(target.chainId)) {

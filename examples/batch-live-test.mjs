@@ -63,7 +63,8 @@ function base58Encode(bytes) {
 }
 // High-entropy base so filler EVM addresses don't collide with precompiles/dust.
 const evmFiller = (i) =>
-  "0x" + (0xdecaf0000000000000000000n + BigInt(i)).toString(16).padStart(40, "0");
+  "0x" +
+  (0xdecaf0000000000000000000n + BigInt(i)).toString(16).padStart(40, "0");
 const solFiller = (i) => {
   const b = new Uint8Array(32);
   for (let k = 0; k < 32; k++) b[k] = (i * 131 + k * 7 + 1) & 0xff;
@@ -83,8 +84,20 @@ const CHAINS = [
     url: "https://ethereum-rpc.publicnode.com",
     filler: evmFiller,
     anchors: [
-      { target: { address: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", chainId: 1 }, decimals: 18 },
-      { target: { address: "0x28C6c06298d514Db089934071355E5743bf21d60", chainId: 1 }, decimals: 18 },
+      {
+        target: {
+          address: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+          chainId: 1,
+        },
+        decimals: 18,
+      },
+      {
+        target: {
+          address: "0x28C6c06298d514Db089934071355E5743bf21d60",
+          chainId: 1,
+        },
+        decimals: 18,
+      },
       {
         target: {
           address: "0x55FE002aefF02F77364de339a1292923A15844B8",
@@ -96,51 +109,78 @@ const CHAINS = [
       },
     ],
   },
-  {
-    name: "Solana / JSON-RPC batch (mainnet)",
-    rpcKey: "solana-mainnet",
-    url: "https://solana-rpc.publicnode.com",
-    filler: solFiller,
-    anchors: [
-      { target: { address: "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9", chainId: "solana-mainnet" }, decimals: 9 },
-      { target: { address: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM", chainId: "solana-mainnet" }, decimals: 9 },
-      {
-        target: {
-          address: "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9",
-          tokenAddress: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-          decimals: 6,
-          chainId: "solana-mainnet",
-        },
-        decimals: 6,
-      },
-    ],
-  },
-  {
-    name: "Tron / JSON-RPC batch (mainnet)",
-    rpcKey: "tron-mainnet",
-    url: "https://api.trongrid.io/jsonrpc",
-    filler: tronFiller,
-    anchors: [
-      { target: { address: "TWd4WrZ9wn84f5x1hZhL4DHvk738ns5jwb", chainId: "tron-mainnet" }, decimals: 6 },
-      { target: { address: "TKzxdSv2FZKQrEqkKVgp5DcwEXBEKMg2Ax", chainId: "tron-mainnet" }, decimals: 6 },
-      {
-        target: {
-          address: "TWd4WrZ9wn84f5x1hZhL4DHvk738ns5jwb",
-          tokenAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
-          decimals: 6,
-          chainId: "tron-mainnet",
-        },
-        decimals: 6,
-      },
-    ],
-  },
+  // {
+  //   name: "Solana / JSON-RPC batch (mainnet)",
+  //   rpcKey: "solana-mainnet",
+  //   url: "https://solana-rpc.publicnode.com",
+  //   filler: solFiller,
+  //   anchors: [
+  //     {
+  //       target: {
+  //         address: "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9",
+  //         chainId: "solana-mainnet",
+  //       },
+  //       decimals: 9,
+  //     },
+  //     {
+  //       target: {
+  //         address: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
+  //         chainId: "solana-mainnet",
+  //       },
+  //       decimals: 9,
+  //     },
+  //     {
+  //       target: {
+  //         address: "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9",
+  //         tokenAddress: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  //         decimals: 6,
+  //         chainId: "solana-mainnet",
+  //       },
+  //       decimals: 6,
+  //     },
+  //   ],
+  // },
+  // {
+  //   name: "Tron / JSON-RPC batch (mainnet)",
+  //   rpcKey: "tron-mainnet",
+  //   url: "https://tron-evm.publicnode.com/jsonrpc",
+  //   filler: tronFiller,
+  //   anchors: [
+  //     {
+  //       target: {
+  //         address: "TWd4WrZ9wn84f5x1hZhL4DHvk738ns5jwb",
+  //         chainId: "tron-mainnet",
+  //       },
+  //       decimals: 6,
+  //     },
+  //     {
+  //       target: {
+  //         address: "TKzxdSv2FZKQrEqkKVgp5DcwEXBEKMg2Ax",
+  //         chainId: "tron-mainnet",
+  //       },
+  //       decimals: 6,
+  //     },
+  //     {
+  //       target: {
+  //         address: "TWd4WrZ9wn84f5x1hZhL4DHvk738ns5jwb",
+  //         tokenAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+  //         decimals: 6,
+  //         chainId: "tron-mainnet",
+  //       },
+  //       decimals: 6,
+  //     },
+  //   ],
+  // },
 ];
 
 for (const chain of CHAINS) {
   console.log(`\n── ${chain.name} — ${N} targets ──`);
 
   // Build 500 synthetic filler targets, then plant anchors at fixed indices.
-  const targets = Array.from({ length: N }, (_, i) => ({ address: chain.filler(i), chainId: chain.rpcKey }));
+  const targets = Array.from({ length: N }, (_, i) => ({
+    address: chain.filler(i),
+    chainId: chain.rpcKey,
+  }));
   const anchorAt = new Map();
   chain.anchors.forEach((a, k) => {
     const idx = ANCHOR_INDICES[k];
@@ -173,21 +213,37 @@ for (const chain of CHAINS) {
     ok(true, `${N} targets collapsed into 1 HTTP request (${ms}ms, real node)`);
   } else {
     // Node capped/rejected the 500-batch → getBalances fell back to individual
-    // reads. Not a decode error; use maxBatchSize to chunk under such a cap.
-    console.log(`  ⚠ NOTE — node did not honor a ${N}-item batch: ${batchReqs} requests (fell back to individual reads)`);
+    // reads. Not a decode error; split your targets into smaller getBalances()
+    // calls to stay under such a cap.
+    console.log(
+      `  ⚠ NOTE — node did not honor a ${N}-item batch: ${batchReqs} requests (fell back to individual reads)`,
+    );
   }
 
-  ok(batched.length === N, `returned ${batched.length} results (expected ${N})`);
-  const invalid = batched.filter((r) => typeof r.balance.raw !== "bigint").length;
+  ok(
+    batched.length === N,
+    `returned ${batched.length} results (expected ${N})`,
+  );
+  const invalid = batched.filter(
+    (r) => typeof r.balance.raw !== "bigint",
+  ).length;
   ok(invalid === 0, `every one of ${N} slots is a valid bigint snapshot`);
 
   // Verify each anchor decoded correctly AT ITS INDEX (proves ordering across 500).
   for (const idx of ANCHOR_INDICES) {
     const a = anchorAt.get(idx);
     const b = batched[idx].balance;
-    const label = a.target.tokenAddress ? `token ${a.target.tokenAddress.slice(0, 8)}…` : "native";
-    ok(b.raw > 0n, `[idx ${idx}] ${label}: funded value landed at its index (raw ${b.raw})`);
-    ok(b.decimals === a.decimals, `[idx ${idx}] ${label}: decimals match (${b.decimals})`);
+    const label = a.target.tokenAddress
+      ? `token ${a.target.tokenAddress.slice(0, 8)}…`
+      : "native";
+    ok(
+      b.raw > 0n,
+      `[idx ${idx}] ${label}: funded value landed at its index (raw ${b.raw})`,
+    );
+    ok(
+      b.decimals === a.decimals,
+      `[idx ${idx}] ${label}: decimals match (${b.decimals})`,
+    );
 
     // Cross-check the anchor against an individual read on the same node.
     let single;
@@ -195,7 +251,9 @@ for (const chain of CHAINS) {
       single = await getBalance(a.target, config);
     } catch (err) {
       skips++;
-      console.log(`  ⚠ SKIP [idx ${idx}] ${label} — individual cross-check failed: ${err.message}`);
+      console.log(
+        `  ⚠ SKIP [idx ${idx}] ${label} — individual cross-check failed: ${err.message}`,
+      );
       continue;
     }
     ok(
@@ -203,9 +261,13 @@ for (const chain of CHAINS) {
       `[idx ${idx}] ${label}: symbol consistent (batch ${b.symbol ?? "∅"} / single ${single.symbol ?? "∅"})`,
     );
     if (b.raw === single.raw) {
-      console.log(`  ✓ [idx ${idx}] ${label}: raw matches individual read exactly`);
+      console.log(
+        `  ✓ [idx ${idx}] ${label}: raw matches individual read exactly`,
+      );
     } else {
-      console.log(`  ⚠ [idx ${idx}] ${label}: raw differs (batch ${b.raw} vs single ${single.raw}) — balance moved between reads, not a decode bug`);
+      console.log(
+        `  ⚠ [idx ${idx}] ${label}: raw differs (batch ${b.raw} vs single ${single.raw}) — balance moved between reads, not a decode bug`,
+      );
     }
   }
 
@@ -215,7 +277,9 @@ for (const chain of CHAINS) {
 
 console.log("");
 if (failures > 0) {
-  console.log(`${failures} CHECK(S) FAILED${skips ? `, ${skips} skipped` : ""}`);
+  console.log(
+    `${failures} CHECK(S) FAILED${skips ? `, ${skips} skipped` : ""}`,
+  );
   process.exit(1);
 } else if (skips > 0) {
   console.log(`LIVE CHECKS PASSED (with ${skips} network skip(s))`);

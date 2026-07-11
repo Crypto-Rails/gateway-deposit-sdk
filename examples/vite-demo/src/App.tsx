@@ -70,6 +70,9 @@ export function App() {
       tokens: { accent },
       // Raw CSS escape hatch — tweak any `.dw-*` rule inside the shadow root.
       css: ".dw-card { border-radius: 12px; }",
+      // Bring your own RPCs. A value can be one URL or an array — arrays are
+      // load-balanced (round-robin) and failed over in order:
+      //   rpcUrls: { 1: ["https://rpc-a", "https://rpc-b"] },
     }),
     [company, locale, accent],
   );

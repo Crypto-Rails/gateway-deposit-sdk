@@ -457,6 +457,9 @@
               tokens: { accent }, // theming — design token override
               css: css || undefined, // raw CSS into the shadow root
               messages: waiting ? { waiting } : undefined, // per-string override
+              // Bring your own RPCs. A value can be one URL or an array — arrays
+              // are load-balanced (round-robin) and failed over in order:
+              //   rpcUrls: { 1: ["https://rpc-a", "https://rpc-b"] },
             },
             // Fires each poll while the running total is still below minDepositRaw.
             onPartialDeposit: (e) => {

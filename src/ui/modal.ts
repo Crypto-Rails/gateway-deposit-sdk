@@ -181,6 +181,17 @@ export async function createModal(
   body.append(qrBox, meta, addrRow, status);
   card.appendChild(body);
 
+  // ---- footer credit ----
+  const credit = document.createElement("div");
+  credit.className = "dw-credit";
+  const creditLink = document.createElement("a");
+  creditLink.href = "https://cryptorails.tech";
+  creditLink.target = "_blank";
+  creditLink.rel = "noopener noreferrer";
+  creditLink.textContent = "cryptorails.tech";
+  credit.append(document.createTextNode("Supported by "), creditLink);
+  card.appendChild(credit);
+
   shadow.appendChild(overlay);
   document.body.appendChild(host);
 

@@ -1,4 +1,4 @@
-import { rpcCall, type RpcHeaders } from "../rpc.js";
+import { rpcCall, type RpcEndpoint, type RpcHeaders } from "../rpc.js";
 import type { BalanceSnapshot } from "../types.js";
 
 export interface EvmBalanceOptions {
@@ -28,7 +28,7 @@ function padAddress(address: string): string {
 }
 
 async function ethCall(
-  url: string,
+  url: RpcEndpoint,
   to: string,
   data: string,
   fetchFn: typeof fetch,
@@ -55,7 +55,7 @@ function decodeAbiString(hex: string): string | undefined {
 }
 
 export async function getEvmBalance(
-  rpcUrl: string,
+  rpcUrl: RpcEndpoint,
   address: string,
   tokenAddress: string | null | undefined,
   knownDecimals: number | undefined,

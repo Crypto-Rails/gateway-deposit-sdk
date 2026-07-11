@@ -1,4 +1,4 @@
-import { rpcBatch, rpcCall, type RpcHeaders } from "../rpc.js";
+import { rpcBatch, rpcCall, type RpcEndpoint, type RpcHeaders } from "../rpc.js";
 import type { BalanceSnapshot, DepositTarget } from "../types.js";
 
 const SPL_TOKEN_PROGRAM = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
@@ -38,7 +38,7 @@ export function isNativeSol(tokenAddress?: string | null): boolean {
 }
 
 export async function getSolanaBalance(
-  rpcUrl: string,
+  rpcUrl: RpcEndpoint,
   address: string,
   tokenAddress: string | null | undefined,
   knownDecimals: number | undefined,
@@ -74,7 +74,7 @@ export async function getSolanaBalance(
  * `getTokenAccountsByOwner` for SPL — so results line up 1:1 with `targets`.
  */
 export async function getSolanaBalancesBatch(
-  rpcUrl: string,
+  rpcUrl: RpcEndpoint,
   targets: DepositTarget[],
   fetchFn: typeof fetch,
   headers?: RpcHeaders,

@@ -9,6 +9,7 @@
  * - `"tron-shasta"`     → Tron Shasta testnet
  * - `"tron-nile"`       → Tron Nile testnet
  */
+import type { RpcEndpoint } from "./rpc.js";
 import type { Messages } from "./ui/i18n.js";
 import type { ThemeTokens } from "./ui/styles.js";
 
@@ -144,8 +145,12 @@ export interface DepositWatchConfig {
   /**
    * Override or extend the built-in RPC endpoints. Keyed by {@link ChainId}.
    * e.g. `{ 1: "https://my-eth-rpc", "solana-mainnet": "https://my-sol-rpc" }`
+   *
+   * A value may also be an array of URLs, which are load-balanced (round-robin)
+   * and failed over in order — if one endpoint errors the next is tried, e.g.
+   * `{ 1: ["https://rpc-a", "https://rpc-b"] }`.
    */
-  rpcUrls?: Record<string | number, string>;
+  rpcUrls?: Record<string | number, RpcEndpoint>;
   /**
    * Per-chain HTTP headers, keyed by {@link ChainId} — typically an API key.
    * The single best fix for TronGrid's aggressive free-tier rate limiting:
@@ -196,18 +201,4 @@ export interface DepositWatchConfig {
   css?: string;
   /** Fetch implementation override (SSR / custom agents). Default global `fetch`. */
   fetchFn?: typeof fetch;
-  /**
-   * Maximum number of targets packed into a single batched request — an EVM
-   * Multicall3 `eth_call`, or a Solana/Tron JSON-RPC batch. Groups larger than
-   * this are split into multiple requests that run in parallel and are
-   * reassembled in the original order. Use it to stay under a provider's batch
-   * or calldata limits (public nodes often cap JSON-RPC batch length, and a huge
-   * Multicall3 call can exceed the `eth_call` gas ceiling).
-   *
-   * Counts targets, not sub-calls: a token target with an unknown `decimals`
-   * costs two sub-calls, so the actual request may hold up to `2 × maxBatchSize`
-   * sub-calls. Unset (the default) means no limit — every target on a chain
-   * goes in one request. Values `< 1` or non-finite are treated as no limit.
-   */
-  maxBatchSize?: number;
 }

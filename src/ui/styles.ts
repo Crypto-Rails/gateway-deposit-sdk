@@ -194,6 +194,13 @@ export function modalCss(tokens: ThemeTokens, extraCss?: string): string {
 .dw-status[data-tone="success"] { color: var(--dw-success); font-weight: 600; }
 .dw-status[data-tone="error"] { color: var(--dw-error); }
 
+.dw-credit {
+  text-align: center; padding: 10px 18px 12px;
+  font-size: 11px; color: var(--dw-sub); border-top: 1px solid var(--dw-border);
+}
+.dw-credit a { color: var(--dw-sub); text-decoration: none; font-weight: 600; }
+.dw-credit a:hover { color: var(--dw-accent); text-decoration: underline; }
+
 .dw-toast {
   position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%);
   z-index: 2147483001; background: var(--dw-toast-bg); color: var(--dw-toast-fg);

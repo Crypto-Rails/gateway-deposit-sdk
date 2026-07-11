@@ -77,6 +77,9 @@ const checks = {
   "title correct": shadow?.querySelector(".dw-title")?.textContent === "Test deposit",
   "waiting status shown": /Waiting/.test(shadow?.querySelector(".dw-status")?.textContent ?? ""),
   "address shown": /0xd8dA/i.test(shadow?.querySelector(".dw-addr")?.textContent ?? ""),
+  "credit shown": /Supported by/.test(shadow?.querySelector(".dw-credit")?.textContent ?? ""),
+  "credit links to cryptorails.tech":
+    shadow?.querySelector(".dw-credit a")?.getAttribute("href") === "https://cryptorails.tech",
 };
 
 // Now simulate funds arriving.

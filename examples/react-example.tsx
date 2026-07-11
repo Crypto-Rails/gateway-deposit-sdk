@@ -36,7 +36,8 @@ export function DepositButton({ receivingAddress }: { receivingAddress: string }
     title: "Add funds",
     theme: "auto",
     // Production tip: pass your own RPCs / API keys rather than the public defaults.
-    // rpcUrls: { 8453: "https://base-mainnet.g.alchemy.com/v2/<key>" },
+    // A value can be one URL or an array (load-balanced + failed over in order):
+    // rpcUrls: { 8453: ["https://base-mainnet.g.alchemy.com/v2/<key>", "https://base-rpc.publicnode.com"] },
   });
 
   const [status, setStatus] = useState<string>("");

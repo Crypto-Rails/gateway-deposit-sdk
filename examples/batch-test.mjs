@@ -271,62 +271,6 @@ console.log("\n── fallback: a rejected batch degrades to individual reads �
   ok(vals[0] === 10n && vals[1] === 20n && vals[2] === 30n, "fallback preserved per-target values and order");
 }
 
-console.log("\n── maxBatchSize: 500 targets split into parallel chunked requests ──");
-{
-  const CH = 100;
-  const families = [
-    { name: "EVM", count: "evm", make: (i) => ({ address: evmAddress(i), chainId: 1 }) },
-    { name: "Solana", count: "solana", make: (i) => ({ address: solAddress(i), chainId: "solana-mainnet" }) },
-    { name: "Tron", count: "tron", make: (i) => ({ address: tronAddress(i), chainId: "tron-mainnet" }) },
-  ];
-  for (const fam of families) {
-    const { fetchFn, counts } = makeMock();
-    const targets = Array.from({ length: STRESS }, (_, i) => fam.make(i));
-    const out = await getBalances(targets, { rpcUrls, fetchFn, maxBatchSize: CH });
-    eq(counts[fam.count], STRESS / CH, `${fam.name}: 500 targets @ maxBatchSize ${CH} → ${STRESS / CH} requests`);
-    // Each chunk restarts value numbering at 1, so index i must read (i % CH) + 1 —
-    // which only holds if every chunk's results landed at the right global indices.
-    ok(
-      out.every((r, i) => r.balance.raw === BigInt((i % CH) + 1)),
-      `${fam.name}: all 500 values correct + in order across chunks`,
-    );
-  }
-}
-
-console.log("\n── maxBatchSize edge cases ──");
-{
-  const solTargets = () => Array.from({ length: STRESS }, (_, i) => ({ address: solAddress(i), chainId: "solana-mainnet" }));
-
-  // Chunk size that doesn't divide evenly → last chunk is the remainder.
-  {
-    const { fetchFn, counts } = makeMock();
-    const out = await getBalances(solTargets(), { rpcUrls, fetchFn, maxBatchSize: 200 });
-    eq(counts.solana, 3, "500 @ maxBatchSize 200 → 3 requests (200 + 200 + 100)");
-    ok(out.every((r, i) => r.balance.raw === BigInt((i % 200) + 1)), "remainder chunk reassembled in order");
-  }
-
-  // Limit ≥ group size → a single request (no unnecessary splitting).
-  {
-    const { fetchFn, counts } = makeMock();
-    await getBalances(solTargets(), { rpcUrls, fetchFn, maxBatchSize: 1000 });
-    eq(counts.solana, 1, "maxBatchSize ≥ group size → still 1 request");
-  }
-
-  // maxBatchSize 1 → one request per target (extreme but valid).
-  {
-    const { fetchFn, counts } = makeMock();
-    await getBalances(solTargets(), { rpcUrls, fetchFn, maxBatchSize: 1 });
-    eq(counts.solana, STRESS, "maxBatchSize 1 → one request per target");
-  }
-
-  // Invalid / non-finite values are treated as "no limit".
-  for (const bad of [0, -5, NaN, Infinity]) {
-    const { fetchFn, counts } = makeMock();
-    await getBalances(solTargets(), { rpcUrls, fetchFn, maxBatchSize: bad });
-    eq(counts.solana, 1, `maxBatchSize ${bad} treated as no limit → 1 request`);
-  }
-}
-
 console.log("\n── consistency: batched values equal individual getBalance() reads ──");
 {
   // Derive each Solana balance from the address index, so the batch path (keyed
@@ -361,6 +305,63 @@ console.log("\n── consistency: batched values equal individual getBalance() 
   for (let i = 0; i < targets.length; i++) {
     const single = await getBalance(targets[i], { rpcUrls, fetchFn });
     eq(single.raw, batched[i].balance.raw, `target ${i}: batch raw == individual raw`);
+  }
+}
+
+console.log("\n── multi-URL RPC endpoints: round-robin + failover ──");
+{
+  // An EVM Multicall3 mock keyed by URL. `dead` is a set of URLs whose fetch
+  // throws (simulating an unreachable / erroring endpoint); every hit is
+  // recorded so we can assert how load spread across the list.
+  function makeUrlMock(dead = new Set()) {
+    const hits = [];
+    const fetchFn = async (url, init) => {
+      hits.push(url);
+      if (dead.has(url)) throw new Error(`network down: ${url}`);
+      const payload = JSON.parse(init.body);
+      const dataNoHex = payload.params[0].data.slice(2);
+      const n = parseInt(dataNoHex.slice(8 + 64, 8 + 128), 16);
+      const datas = Array.from({ length: n }, (_, i) => w(i + 1));
+      return jsonResponse({ jsonrpc: "2.0", id: payload.id, result: encodeAggregate3Return(datas) });
+    };
+    return { fetchFn, hits };
+  }
+  const A = "https://rpc-a";
+  const B = "https://rpc-b";
+  const target = () => [{ address: evmAddress(0), chainId: 1 }];
+
+  // Failover: first URL is dead → the call transparently retries the second.
+  {
+    const { fetchFn, hits } = makeUrlMock(new Set([A]));
+    const out = await getBalances(target(), { rpcUrls: { 1: [A, B] }, fetchFn });
+    eq(out[0].balance.raw, 1n, "failover: balance resolved via the surviving URL");
+    ok(hits.includes(A) && hits.includes(B), "failover: both URLs were attempted");
+  }
+
+  // Round-robin: many single-target calls over a 2-URL endpoint hit BOTH URLs
+  // (the starting point rotates), so load is spread rather than pinned to one.
+  {
+    const { fetchFn, hits } = makeUrlMock();
+    for (let i = 0; i < 6; i++) await getBalances(target(), { rpcUrls: { 1: [A, B] }, fetchFn });
+    ok(hits.includes(A) && hits.includes(B), "round-robin: successful calls spread across both URLs");
+  }
+
+  // All endpoints dead → failover exhausts every URL before giving up. The
+  // low-level client throws; getBalances then degrades that target to a zero
+  // snapshot rather than propagating (its documented per-target contract).
+  {
+    const { fetchFn, hits } = makeUrlMock(new Set([A, B]));
+    const out = await getBalances(target(), { rpcUrls: { 1: [A, B] }, fetchFn });
+    ok(hits.includes(A) && hits.includes(B), "all URLs dead → every URL was attempted before giving up");
+    eq(out[0].balance.raw, 0n, "all URLs dead → target degrades to a zero balance");
+  }
+
+  // A plain string endpoint still works (single-URL, no array).
+  {
+    const { fetchFn, hits } = makeUrlMock();
+    const out = await getBalances(target(), { rpcUrls: { 1: A }, fetchFn });
+    eq(out[0].balance.raw, 1n, "string endpoint: balance resolved");
+    ok(hits.every((u) => u === A), "string endpoint: only the one URL was used");
   }
 }
 

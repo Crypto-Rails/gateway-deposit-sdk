@@ -1,7 +1,7 @@
 import { getBalance } from "./chains/index.js";
 import { getSolanaBalancesBatch } from "./chains/solana.js";
 import { getTronBalancesBatch } from "./chains/tron.js";
-import { chainKey, isSolana, isTron, resolveRpcHeaders, resolveRpcUrl } from "./config.js";
+import { chainKey, isSolana, isTron, resolveRpcHeaders, resolveRpcUrls } from "./config.js";
 import { getEvmBalancesMulticall } from "./multicall.js";
 import type { BalanceSnapshot, DepositTarget, DepositWatchConfig } from "./types.js";
 
@@ -55,10 +55,6 @@ export async function getBalances(
 
   const jobs: Promise<void>[] = [];
 
-  // Cap targets-per-request so one chain's group can span several parallel
-  // batches, keeping each under a provider's batch / calldata limit.
-  const maxBatch = normalizeMaxBatch(config.maxBatchSize);
-
   const fallbackIndividually = (group: Item[]) =>
     Promise.all(
       group.map(async (g) => {
@@ -67,84 +63,64 @@ export async function getBalances(
     );
 
   for (const group of evmGroups.values()) {
-    for (const part of chunk(group, maxBatch)) {
-      jobs.push(
-        (async () => {
-          try {
-            const snaps = await getEvmBalancesMulticall(
-              part[0]!.target.chainId,
-              part.map((g) => g.target),
-              config,
-            );
-            part.forEach((g, i) => (balances[g.index] = snaps[i] ?? zero));
-          } catch {
-            // Chain lacks Multicall3, or the batched call failed — read one by one.
-            await fallbackIndividually(part);
-          }
-        })(),
-      );
-    }
+    jobs.push(
+      (async () => {
+        try {
+          const snaps = await getEvmBalancesMulticall(
+            group[0]!.target.chainId,
+            group.map((g) => g.target),
+            config,
+          );
+          group.forEach((g, i) => (balances[g.index] = snaps[i] ?? zero));
+        } catch {
+          // Chain lacks Multicall3, or the batched call failed — read one by one.
+          await fallbackIndividually(group);
+        }
+      })(),
+    );
   }
 
   for (const group of tronGroups.values()) {
-    for (const part of chunk(group, maxBatch)) {
-      jobs.push(
-        (async () => {
-          try {
-            const chainId = part[0]!.target.chainId;
-            const snaps = await getTronBalancesBatch(
-              resolveRpcUrl(chainId, config.rpcUrls),
-              part.map((g) => g.target),
-              config.fetchFn ?? fetch,
-              resolveRpcHeaders(chainId, config.rpcHeaders),
-            );
-            part.forEach((g, i) => (balances[g.index] = snaps[i] ?? zero));
-          } catch {
-            // Batch unsupported / failed — read one by one.
-            await fallbackIndividually(part);
-          }
-        })(),
-      );
-    }
+    jobs.push(
+      (async () => {
+        try {
+          const chainId = group[0]!.target.chainId;
+          const snaps = await getTronBalancesBatch(
+            resolveRpcUrls(chainId, config.rpcUrls),
+            group.map((g) => g.target),
+            config.fetchFn ?? fetch,
+            resolveRpcHeaders(chainId, config.rpcHeaders),
+          );
+          group.forEach((g, i) => (balances[g.index] = snaps[i] ?? zero));
+        } catch {
+          // Batch unsupported / failed — read one by one.
+          await fallbackIndividually(group);
+        }
+      })(),
+    );
   }
 
   for (const group of solanaGroups.values()) {
-    for (const part of chunk(group, maxBatch)) {
-      jobs.push(
-        (async () => {
-          try {
-            const chainId = part[0]!.target.chainId;
-            const snaps = await getSolanaBalancesBatch(
-              resolveRpcUrl(chainId, config.rpcUrls),
-              part.map((g) => g.target),
-              config.fetchFn ?? fetch,
-              resolveRpcHeaders(chainId, config.rpcHeaders),
-            );
-            part.forEach((g, i) => (balances[g.index] = snaps[i] ?? zero));
-          } catch {
-            // Batch unsupported / failed — read one by one.
-            await fallbackIndividually(part);
-          }
-        })(),
-      );
-    }
+    jobs.push(
+      (async () => {
+        try {
+          const chainId = group[0]!.target.chainId;
+          const snaps = await getSolanaBalancesBatch(
+            resolveRpcUrls(chainId, config.rpcUrls),
+            group.map((g) => g.target),
+            config.fetchFn ?? fetch,
+            resolveRpcHeaders(chainId, config.rpcHeaders),
+          );
+          group.forEach((g, i) => (balances[g.index] = snaps[i] ?? zero));
+        } catch {
+          // Batch unsupported / failed — read one by one.
+          await fallbackIndividually(group);
+        }
+      })(),
+    );
   }
 
   await Promise.all(jobs);
 
   return targets.map((target, i) => ({ target, balance: balances[i] ?? zero }));
-}
-
-/** Normalize `maxBatchSize`: a positive integer, or `Infinity` for "no limit". */
-function normalizeMaxBatch(v: number | undefined): number {
-  if (v === undefined || !Number.isFinite(v) || v < 1) return Infinity;
-  return Math.floor(v);
-}
-
-/** Split into consecutive slices of at most `size` (order preserved). */
-function chunk<T>(arr: T[], size: number): T[][] {
-  if (!Number.isFinite(size) || arr.length <= size) return [arr];
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
 }

@@ -1,5 +1,5 @@
 import { isNativeToken } from "./chains/evm.js";
-import { resolveRpcHeaders, resolveRpcUrl } from "./config.js";
+import { resolveRpcHeaders, resolveRpcUrls } from "./config.js";
 import { rpcCall } from "./rpc.js";
 import type { BalanceSnapshot, ChainId, DepositTarget, DepositWatchConfig } from "./types.js";
 
@@ -94,7 +94,7 @@ export async function getEvmBalancesMulticall(
   targets: DepositTarget[],
   config: DepositWatchConfig,
 ): Promise<BalanceSnapshot[]> {
-  const rpcUrl = resolveRpcUrl(chainId, config.rpcUrls);
+  const rpcUrl = resolveRpcUrls(chainId, config.rpcUrls);
   const fetchFn = config.fetchFn ?? fetch;
   const headers = resolveRpcHeaders(chainId, config.rpcHeaders);
 
