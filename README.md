@@ -120,7 +120,11 @@ await watchDeposits(targets, {
 Read every target's balance — imported tokens **and** native — in as few RPC
 calls as possible. EVM targets on the same chain are batched into a single
 **Multicall3** `eth_call` (native via `getEthBalance`, tokens via `balanceOf`
-+ `decimals`). Solana / Tron targets fall back to individual (parallel) calls.
++ `decimals`). TRON mainnet (`tron` / `tron-mainnet`) uses its own Multicall3
+deployment at `TEazPvZwDjDtFeJupyo7QunvnrnUjPH8ED`, in chunks of at most 100
+contract calls, including metadata. Failed aggregates fall back to bounded
+JSON-RPC batches, then failed balances are retried individually. TRON testnets
+use batches directly. Solana uses native account chunks and SPL token batches.
 Results preserve input order.
 
 ```ts
@@ -143,7 +147,9 @@ Each entry is `{ target, balance: { raw: bigint, decimals?, symbol? } }`. Use
 `formatUnits(balance.raw, balance.decimals)` to render.
 
 > `getBalances()` never throws for a single failed target — an unreadable
-> address comes back as `{ raw: 0n }` so one bad RPC can't sink the whole batch.
+> address comes back with a zero placeholder balance and an `error: Error` field.
+> Check `result.error` before using the balance; a failed read is not proof of
+> an empty account. The TRON watcher skips these reads when establishing baselines.
 > It takes the same [`DepositWatchConfig`](#depositwatchconfig-reference) as the
 > modal (second arg), so `rpcUrls`, `rpcHeaders` and `fetchFn` all apply here
 > too.
@@ -546,11 +552,11 @@ counts) and fires only when the balance rises above it. Either way the event
 carries `deltaRaw` (bigint) and a formatted `deltaFormatted`, and `onDeposit` is
 awaited before the modal closes.
 
-Per-chain balance reads: EVM uses `eth_getBalance` (native) and ERC-20 `balanceOf`
-+ `decimals` + `symbol`; Solana uses `getBalance` (native) and
-`getTokenAccountsByOwner` summed across accounts (SPL); Tron uses the TronGrid
-account API (native TRX + TRC-20). `getBalances()` batches EVM reads through
-Multicall3.
+Individual balance reads use `eth_getBalance` for EVM native coins and TRX,
+and `eth_call` for ERC-20 / TRC-20 tokens. Solana uses `getBalance` and
+`getTokenAccountsByOwner`. The watcher groups TRON targets through `getBalances()`
+and reuses token decimals within a session. Failed TRON reads are skipped, and
+polls do not overlap while a previous read or deposit callback is in progress.
 
 > **Note on RPCs.** The bundled endpoints are shared public nodes for convenience —
 > rate-limited and not for production traffic. Pass your own via `config.rpcUrls`.
@@ -569,11 +575,32 @@ polling will hit `429`. Two levers, use both:
    });
    ```
 
-2. **Make fewer requests** — `getBalances()` already batches (Multicall3 on EVM,
-   JSON-RPC batch on Tron) so many balances cost one HTTP request. For the modal,
-   raise `pollIntervalMs`.
+2. **Make fewer RPC calls** — `getBalances()` uses Multicall3 on EVM and TRON
+   mainnet. JSON-RPC batches reduce HTTP overhead, but QuickNode counts each
+   enclosed call separately against its request limit. Supply known token
+   `decimals` and raise `pollIntervalMs` where appropriate.
 
 You can also point `rpcUrls` at your own dedicated nodes.
+
+For QuickNode TRON, pass its Ethereum-compatible JSON-RPC URL (ending in
+`/jsonrpc`):
+
+```ts
+const config = {
+  rpcUrls: { "tron-mainnet": "https://YOUR-ENDPOINT.tron-mainnet.quiknode.pro/YOUR-TOKEN/jsonrpc" },
+};
+```
+
+To check a dedicated endpoint locally:
+
+```sh
+LIVE_CHAIN=tron TRON_RPC_URL="$YOUR_TRON_RPC_URL" npm run test:live
+```
+
+The live test checks 500 targets in five Multicall3 requests and compares funded
+anchors against individual reads. It fails on unexpected fallback, failed reads,
+or an unavailable configured endpoint. Public endpoints may be rate limited;
+network skips are reported explicitly, and no verified chains exits with code 2.
 
 ## Utilities
 

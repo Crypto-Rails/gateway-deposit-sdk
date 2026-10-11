@@ -49,14 +49,8 @@ export const DEFAULT_RPC_URLS: Record<string, RpcEndpoint> = {
   "43113": "https://avalanche-fuji-c-chain-rpc.publicnode.com", // Avalanche Fuji
 
   // ---- Solana (keyed by cluster alias) ----
-  solana: [
-    "https://solana-rpc.publicnode.com",
-    "https://api.mainnet-beta.solana.com",
-  ],
-  "solana-mainnet": [
-    "https://solana-rpc.publicnode.com",
-    "https://api.mainnet-beta.solana.com",
-  ],
+  solana: ["https://api.mainnet-beta.solana.com"],
+  "solana-mainnet": ["https://api.mainnet-beta.solana.com"],
   "solana-devnet": "https://api.devnet.solana.com",
   "solana-testnet": "https://api.testnet.solana.com",
 
