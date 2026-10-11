@@ -10,14 +10,24 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./react": {
-      "types": "./dist/react/index.d.ts",
-      "import": "./dist/react/index.js",
-      "require": "./dist/react/index.cjs"
+      "import": {
+        "types": "./dist/react/index.d.ts",
+        "default": "./dist/react/index.js"
+      },
+      "require": {
+        "types": "./dist/react/index.d.cts",
+        "default": "./dist/react/index.cjs"
+      }
     }
   },
   "main": "./dist/index.cjs",
@@ -27,7 +37,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
-    "test": "npm run build && node examples/verify-balance.mjs && node examples/batch-test.mjs && node examples/dom-test.mjs && node examples/mindeposit-test.mjs",
+    "test": "npm run build && node examples/module-compat-test.mjs && node examples/verify-balance.mjs && node examples/batch-test.mjs && node examples/dom-test.mjs && node examples/mindeposit-test.mjs",
     "test:live": "npm run build && node examples/batch-live-test.mjs"
   },
   "keywords": [
