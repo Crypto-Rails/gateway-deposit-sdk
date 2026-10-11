@@ -7,6 +7,8 @@ export interface EvmBalanceOptions {
   nativeDecimals?: number;
   /** Symbol for the native coin, for display. */
   nativeSymbol?: string;
+  /** TRON requires real ABI return data and keeps failed metadata unresolved. */
+  strictTokenReads?: boolean;
 }
 
 const ZERO = "0x0000000000000000000000000000000000000000";
@@ -74,6 +76,9 @@ export async function getEvmBalance(
 
   // Fetch balance first (required); decimals + symbol are best-effort.
   const balHex = await ethCall(rpcUrl, token, balanceData, fetchFn, headers);
+  if (opts.strictTokenReads && !/^0x[0-9a-fA-F]{64}$/.test(balHex ?? "")) {
+    throw new Error("[deposit-watch] Invalid token balance response");
+  }
   const raw = BigInt(balHex === "0x" ? "0x0" : balHex);
 
   let decimals = knownDecimals;
@@ -81,9 +86,15 @@ export async function getEvmBalance(
   if (decimals === undefined) {
     try {
       const decHex = await ethCall(rpcUrl, token, SEL_DECIMALS, fetchFn, headers);
+      if (opts.strictTokenReads && !/^0x[0-9a-fA-F]{64}$/.test(decHex ?? "")) {
+        throw new Error("Invalid token decimals response");
+      }
       decimals = decHex && decHex !== "0x" ? Number(BigInt(decHex)) : 18;
+      if (opts.strictTokenReads && (!Number.isInteger(decimals) || decimals < 0 || decimals > 255)) {
+        throw new Error("Invalid token decimals value");
+      }
     } catch {
-      decimals = 18;
+      decimals = opts.strictTokenReads ? undefined : 18;
     }
   }
   try {

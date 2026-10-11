@@ -1,5 +1,7 @@
 import { validateTarget } from "./address.js";
+import { getBalances, type BalanceResult } from "./balances.js";
 import { getBalance } from "./chains/index.js";
+import { chainKey, isTron } from "./config.js";
 import { formatUnits, shortenAddress } from "./format.js";
 import { resolveMessages, t } from "./ui/i18n.js";
 import { createModal, type DepositModalHandle } from "./ui/modal.js";
@@ -118,53 +120,75 @@ async function runSession(
         }, opts.timeoutMs);
       }
 
+      let polling = false;
+      const decimalsCache = new Map<string, number>();
+      const tokenKey = (target: DepositTarget) => `${chainKey(target.chainId)}:${target.tokenAddress ?? "native"}`;
       const tick = async () => {
-        if (settled) return;
-        const snapshots = new Map<DepositTarget, BalanceSnapshot>();
+        if (settled || polling) return;
+        polling = true;
+        try {
+          const snapshots = new Map<DepositTarget, BalanceSnapshot>();
 
-        await Promise.all(
-          targets.map(async (target, i) => {
-            if (funded.has(i)) return;
-            let snap: BalanceSnapshot;
-            try {
-              snap = await getBalance(target, config);
-            } catch {
-              return; // transient RPC error — try again next tick
-            }
-            snapshots.set(target, snap);
+          const active = targets.flatMap((target, i) => funded.has(i) ? [] : [{ target, i }]);
+          const reads = new Map<number, BalanceResult>();
+          const tron = active.filter(({ target }) => isTron(target.chainId));
+          const withDecimals = (target: DepositTarget) => ({
+            ...target, decimals: target.decimals ?? decimalsCache.get(tokenKey(target)),
+          });
+          await Promise.all([
+            getBalances(tron.map(({ target }) => withDecimals(target)), config).then(results => {
+              tron.forEach(({ i }, index) => { if (results[index]) reads.set(i, results[index]!); });
+            }),
+            ...active.filter(({ target }) => !isTron(target.chainId)).map(async ({ target, i }) => {
+              try {
+                reads.set(i, { target, balance: await getBalance(target, config) });
+              } catch { /* transient RPC error — try again next tick */ }
+            }),
+          ]);
+          if (settled) return;
+          await Promise.all(
+            active.map(async ({ target, i }) => {
+              const read = reads.get(i);
+              if (!read || read.error) return; // transient RPC error — try again next tick
+              const snap = read.balance;
+              if (isTron(target.chainId) && snap.decimals !== undefined) decimalsCache.set(tokenKey(target), snap.decimals);
+              snapshots.set(target, snap);
 
-            // Resolve the baseline this deposit is measured against, and bail out
-            // when nothing qualifying has arrived yet.
-            let baseRaw: bigint;
-            if (opts.detect === "increase") {
-              // Baseline diff: only a rise above the opening balance counts.
-              const base = baseline.get(i);
-              if (base === undefined) {
-                baseline.set(i, snap.raw);
+              // Resolve the baseline this deposit is measured against, and bail out
+              // when nothing qualifying has arrived yet.
+              let baseRaw: bigint;
+              if (opts.detect === "increase") {
+                // Baseline diff: only a rise above the opening balance counts.
+                const base = baseline.get(i);
+                if (base === undefined) {
+                  baseline.set(i, snap.raw);
+                  return;
+                }
+                if (snap.raw <= base) return;
+                baseRaw = base;
+              } else {
+                // "positive": any balance at/above the detection floor is a deposit.
+                if (snap.raw < opts.minAmountRaw) return;
+                baseRaw = 0n;
+              }
+
+              // minDeposit gate: keep polling (accumulating) until the amount
+              // received since the baseline is large enough. The baseline is left
+              // untouched above, so successive installments add up across ticks.
+              const receivedRaw = snap.raw - baseRaw;
+              if (opts.minDepositRaw !== undefined && receivedRaw < opts.minDepositRaw) {
+                reportPartial(i, target, baseRaw, snap);
                 return;
               }
-              if (snap.raw <= base) return;
-              baseRaw = base;
-            } else {
-              // "positive": any balance at/above the detection floor is a deposit.
-              if (snap.raw < opts.minAmountRaw) return;
-              baseRaw = 0n;
-            }
 
-            // minDeposit gate: keep polling (accumulating) until the amount
-            // received since the baseline is large enough. The baseline is left
-            // untouched above, so successive installments add up across ticks.
-            const receivedRaw = snap.raw - baseRaw;
-            if (opts.minDepositRaw !== undefined && receivedRaw < opts.minDepositRaw) {
-              reportPartial(i, target, baseRaw, snap);
-              return;
-            }
+              await handleDeposit(i, target, baseRaw, snap);
+            }),
+          );
 
-            await handleDeposit(i, target, baseRaw, snap);
-          }),
-        );
-
-        opts.onPoll?.(snapshots);
+          opts.onPoll?.(snapshots);
+        } finally {
+          polling = false;
+        }
       };
 
       // A deposit landed but the running total is still short of minDepositRaw:

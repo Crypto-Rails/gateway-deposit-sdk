@@ -137,10 +137,8 @@ async function rpcBatchOnce<T>(
 }
 
 /**
- * Standard JSON-RPC 2.0 batch: send many calls in ONE HTTP request and get the
- * results back in input order. This is the practical "multicall" for chains
- * without a Multicall3 contract (e.g. Tron) — it collapses N requests into one,
- * which directly cuts rate-limit (429) pressure.
+ * Send many JSON-RPC calls in one HTTP request and restore input order.
+ * Providers may count each enclosed call separately for billing and rate limits.
  */
 export async function rpcBatch<T = unknown>(
   url: RpcEndpoint,
